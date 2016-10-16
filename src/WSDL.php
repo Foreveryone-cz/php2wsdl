@@ -379,12 +379,7 @@ class WSDL
         if ($this->isXDSType($type)) {
             return self::$XSDTypes[strtolower($type)];
         } elseif ($type) {
-            if (strpos($type, '[]')) {
-                if ($this->isXDSType(str_replace('[]', '', $type))) {
-                    return self::$XSDTypes['array'];
-                }
-            }
-
+            
             return $this->addComplexType($type);
         } else {
             return null;
@@ -473,14 +468,19 @@ class WSDL
      */
     protected function addComplexTypeArray($singularType, $type)
     {
-        $xsdComplexTypeName = 'ArrayOf' . static::typeToQName($singularType);
+        $isBasicDataType = isset(self::$XSDTypes[strtolower($singularType)]);
+        $nsPrefix = $isBasicDataType ? 'xsd' : 'tns';
+
+        $xsdComplexTypeName = 'ArrayOf' . ucfirst(static::typeToQName($singularType));
         $xsdComplexType = 'tns:' . $xsdComplexTypeName;
 
         // Register type here to avoid recursion.
         $this->addType($type, $xsdComplexType);
 
         // Process singular type using DefaultComplexType strategy.
-        $this->addComplexType($singularType);
+        if(!$isBasicDataType){
+            $this->addComplexType($singularType);
+        }
 
         // Add array type structure to WSDL document.
         $complexType = $this->dom->createElement('xsd:complexType');
@@ -495,7 +495,7 @@ class WSDL
 
         $xsdAttribute = $this->dom->createElement('xsd:attribute');
         $xsdAttribute->setAttribute('ref', 'soap-enc:arrayType');
-        $xsdAttribute->setAttribute('wsdl:arrayType', 'tns:' . static::typeToQName($singularType) . '[]');
+        $xsdAttribute->setAttribute('wsdl:arrayType', $nsPrefix.':' . static::typeToQName($singularType) . '[]');
         $xsdRestriction->appendChild($xsdAttribute);
 
         $this->schema->appendChild($complexType);
