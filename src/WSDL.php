@@ -40,6 +40,8 @@ class WSDL
      * @var array
      */
     private $includedTypes;
+    
+    private static $typeRootNamespace = null;
 
     /**
      * Default XSD Types.
@@ -575,6 +577,15 @@ class WSDL
         return $this->dom->saveXML();
     }
 
+    public static function setTypeRootNamespace($typeRootNamespace) 
+    {
+        if ($typeRootNamespace[0] === '\\') {
+            $typeRootNamespace = substr($typeRootNamespace, 1);
+        }
+        self::$typeRootNamespace = $typeRootNamespace;
+    }
+
+        
     /**
      * Convert a PHP type into QName.
      *
@@ -585,6 +596,13 @@ class WSDL
     {
         if ($type[0] === '\\') {
             $type = substr($type, 1);
+        }
+        
+        if (self::$typeRootNamespace
+            && (strlen(self::$typeRootNamespace)<strlen($type))
+            && (strpos($type, self::$typeRootNamespace.'\\')===0)
+        ){
+            $type = substr($type, strlen(self::$typeRootNamespace)+1);
         }
 
         return str_replace('\\', '.', $type);

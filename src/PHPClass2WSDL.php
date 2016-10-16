@@ -114,8 +114,9 @@ class PHPClass2WSDL
      *
      * @param boolean $withAnnotation Flag if only the methods with '@soap' annotation should be added.
      */
-    public function generateWSDL($withAnnotation = false)
+    public function generateWSDL($withAnnotation = false, $rootNamespace = null)
     {
+        WSDL::setTypeRootNamespace($rootNamespace);
         $qNameClassName = WSDL::typeToQName($this->class);
 
         $this->wsdl = new WSDL($qNameClassName, $this->uri, $this->xslUri);
