@@ -427,8 +427,23 @@ class WSDL
             if ($property->isPublic() && $annotationsCollection->hasAnnotationTag('var')) {
                 $element = $this->dom->createElement('xsd:element');
                 $element->setAttribute('name', $property->getName());
+                
                 $propertyVarAnnotation = $annotationsCollection->getAnnotation('var');
-                $element->setAttribute('type', $this->getXSDType(reset($propertyVarAnnotation)->getVarType()));
+                $varType = reset($propertyVarAnnotation)->getVarType();
+                $isArray = (strpos($varType, '[]') !== false);
+                $varTypeSingular = $isArray ? str_replace('[]', '', $varType) : $varType;
+                $isBasicDataType = isset(self::$XSDTypes[strtolower($varTypeSingular)]);
+                if (!$isBasicDataType)
+                {
+                    $varType = $class->getNamespaceName()."\\".$varType;
+                    $varTypeSingular = $class->getNamespaceName()."\\".$varTypeSingular;
+                }
+                $element->setAttribute('type',
+                        $isArray 
+                            ? $this->addComplexTypeArray($varTypeSingular, $varType)
+                            : $this->getXSDType($varType)
+                );
+                
                 if ($annotationsCollection->hasAnnotationTag('nillable')) {
                     $element->setAttribute('nillable', 'true');
                 }
